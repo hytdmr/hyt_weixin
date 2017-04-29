@@ -8,7 +8,10 @@ from core.logger_helper import logger
 import hashlib
 import tornado.web
 import time
-import xml.etree.cElementTree as ET
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 
 class WxSignatureHandler(tornado.web.RequestHandler):
@@ -16,6 +19,9 @@ class WxSignatureHandler(tornado.web.RequestHandler):
 微信服务器签名验证，消息回复
 check_signature:校验signature是否正确
     """
+    sys_order_reply = '您好，欢迎您关注涛声明月！'
+    # def __init__(self):
+    #     self.sys_order_reply = '您好，欢迎您关注涛声明月！'
 
     def data_receive(self, chunk):
         pass
@@ -49,39 +55,9 @@ check_signature:校验signature是否正确
         logger.debug('sha1=' + sha1 + '&signature' + signature)
         return sha1 == signature
 
-    # def post(self):
-    #     body = self.request.body
-    #     logger.debug('微信消息回复中心】收到用户消息' + str(body.decode('utf-8')))
-    #     data = ET.fromstring(body)
-    #     ToUserName = data.find('ToUserName').text
-    #     FromUserName = data.find('FromUserName').text
-    #     MsgType = data.find('MsgType').text
-    #     if MsgType == 'event':
-    #         '''接收事件推送'''
-    #         try:
-    #             Event = data.find('Event').text
-    #             if Event == 'subscribe':
-    #                 CreateTime = int(time.time())
-    #                 reply_content = '欢迎关注我的微信公众号'
-    #                 out = self.reply_text(
-    #                     FromUserName, ToUserName, CreateTime, reply_content)
-    #                 self.write(out)
-
-    #         except Exception as e:
-    #             pass
-
-    def reply_text(self, FromUserName, ToUserName, CreateTime, Content):
-        '''回复文本消息模板'''
-        textTpl = """< xml > < ToUserName > <![CDATA[% s]] > </ToUserName >
-                     < CreateTime > %s < /CreateTime >
-                     < MsgType > <![CDATA[ % s]] > </MsgType >
-                     < Content > <![CDATA[% s]] > </Content ></xml >"""
-        out = textTpl % (FromUserName, ToUserName, CreateTime, 'text', Content)
-        return out
-
     def post(self):
         body = self.request.body
-        logger.debug('微信消息回复中心】收到用户消息' + str(body.decode('utf-8')))
+        logger.info('微信消息回复中心】收到用户消息' + str(body.decode('utf-8')))
         data = ET.fromstring(body)
         ToUserName = data.find('ToUserName').text
         FromUserName = data.find('FromUserName').text
@@ -90,8 +66,9 @@ check_signature:校验signature是否正确
             '''文本消息或者语音消息'''
             try:
                 MsgId = data.find('MsgId').text
-                if MsgId == 'text':
+                if MsgType == 'text':
                     Content = data.find('Content').text
+                    print(Content)
                 elif MsgType == 'voice':
                     Content = data.find('Recognition').text
                 if Content == u'你好':
@@ -101,21 +78,39 @@ check_signature:校验signature是否正确
                 if reply_content:
                     CreateTime = int(time.time())
                     out = self.reply_text(
-                        FromUserName, ToUserName, CreateTime, Content)
+                        FromUserName, ToUserName, CreateTime, reply_content)
                     self.write(out)
             except Exception as e:
-                pass
+                logger.info(e)
 
         elif MsgType == 'event':
             '''接收事件推送'''
             try:
                 Event = data.find('Event').text
-                if Event == 'subcribe':
+                if Event == 'subscribe':
                     '''关注事件'''
                     CreateTime = int(time.time())
                     reply_content = self.sys_order_reply
                     out = self.reply_text(
-                        FromUserName, ToUserName, CreateTime, Content)
+                        FromUserName, ToUserName, CreateTime, reply_content)
                     self.write(out)
             except Exception as e:
-                pass
+                logger.info(e)
+
+    def reply_text(self, FromUserName, ToUserName, CreateTime, Content):
+        '''回复文本消息模板'''
+        # textTpl = """<xml> <ToUserName><![CDATA[%s]]></ToUserName>
+        # <FromUserName><![CDATA[%s]]></FromUserName>
+        # <CreateTime>%s</CreateTime>
+        # <MsgType><![CDATA[%s]]></MsgType> <Content>
+        # <![CDATA[%s]]></Content></xml>"""
+        textTpl = """<xml>
+                      <ToUserName> <![CDATA[%s]]> </ToUserName>
+                      <FromUserName> <![CDATA[%s]]> </FromUserName>
+                      <CreateTime> %s </CreateTime>
+                      <MsgType> <![CDATA[%s]]> </MsgType>
+                      <Content> <![CDATA[%s]]> </Content>
+                      </xml>"""
+        out = textTpl % (FromUserName, ToUserName,
+                         CreateTime, 'text', Content)
+        return out
