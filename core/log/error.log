@@ -1,0 +1,2 @@
+[2017-04-29 11:21:40]: runtime-log %(lineno)s test-error
+[2017-04-29 12:38:46]: runtime-log %(lineno)s Œ¢–≈sign–£—È£¨---ExceptionHTTP 400: Bad Request (Missing argument signature)

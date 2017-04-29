@@ -11,6 +11,8 @@ import tornado.ioloop
 import tornado.web
 from tornado.options import define, options
 from core.url import urlpatterns
+from core.server.wxschedule import WxSchedule
+
 
 define('port', default=8000, help='run on the given port', type=int)
 
@@ -22,7 +24,7 @@ class Application(tornado.web.Application):
             template_path=os.path.join(
                 os.path.dirname(__file__), "core/template"),
             static_path=os.path.join(os.path.dirname(__file__), "core/static"),
-            debug=True,
+            debug=False,
             login_url="/login",
             cookie_secret="MuG7xxacQdGPR7Svny1OfY6AymHPb0H/t02+I8rIHHE="
         )
@@ -33,6 +35,8 @@ def main():
     tornado.options.parse_command_line()
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(options.port)
+    wx_schedule = WxSchedule()
+    wx_schedule.excute()
     tornado.ioloop.IOLoop.current().start()
 
 

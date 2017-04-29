@@ -6,11 +6,12 @@
 # @Version : $Id$
 
 from core.server.wxauthorize import WxSignatureHandler
-import tornado.web
+from core.server.page_handler import PageHandler
 
 
 """
-解析规则
+WEB解析规则
 """
 urlpatterns = [(r'/wxsignature', WxSignatureHandler),  # 微信签名
+               (r'/page/.*', PageHandler),  # 加载页面
                ]
